@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test;
 
 import java.security.NoSuchAlgorithmException;
 
-class Md5UtilsTest {
+class MD5UtilsTest {
 
     @Test
     void encrypt() throws NoSuchAlgorithmException {
