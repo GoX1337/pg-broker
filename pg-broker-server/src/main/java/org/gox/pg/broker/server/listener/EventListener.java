@@ -43,7 +43,7 @@ public class EventListener implements Runnable {
     }
 
     private void executeListenNotificationQuery() throws SQLException {
-        connection = DataSource.getConnection().unwrap(PgConnection.class);
+        connection = DataSource.getInstance().getConnection().unwrap(PgConnection.class);
         String SQL_QUERY = "LISTEN event_notification";
         PreparedStatement pst = connection.prepareStatement(SQL_QUERY);
         pst.execute();

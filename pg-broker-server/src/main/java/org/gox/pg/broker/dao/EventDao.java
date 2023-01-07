@@ -62,7 +62,7 @@ public class EventDao {
     }
 
     public void executeInitQuery(String query) throws SQLException {
-        try (Connection con = DataSource.getConnection();
+        try (Connection con = DataSource.getInstance().getConnection();
              PreparedStatement pst = con.prepareStatement(query)) {
             pst.execute();
         }
@@ -71,7 +71,7 @@ public class EventDao {
     public void saveEvent(EventEntity event) throws SQLException {
         String SQL_QUERY = "INSERT INTO events (id, timestamp, topic, status, payload) VALUES (?, ?, ?, ?, ?)";
 
-        try (Connection con = DataSource.getConnection();
+        try (Connection con = DataSource.getInstance().getConnection();
              PreparedStatement pst = con.prepareStatement(SQL_QUERY)) {
             pst.setString(1, event.id().toString());
             pst.setTimestamp(2, Timestamp.valueOf(event.timestamp().atZoneSameInstant(ZoneOffset.UTC).toLocalDateTime()));
@@ -88,7 +88,7 @@ public class EventDao {
                 .map(UUID::toString)
                 .toArray();
         String SQL_QUERY = "UPDATE events set status = ? where id = ANY (?)";
-        Connection con = DataSource.getConnection(false);
+        Connection con = DataSource.getInstance().getConnection(false);
         try (PreparedStatement pst = con.prepareStatement(SQL_QUERY)) {
             pst.setString(1, status.toString());
             pst.setArray(2, con.createArrayOf("VARCHAR", listIds));
@@ -102,7 +102,7 @@ public class EventDao {
         String SQL_QUERY = "select * from events e where e.topic = ? and e.status = ? for update skip locked";
         List<EventEntity> events = new ArrayList<>();
 
-        try (Connection con = DataSource.getConnection(false);
+        try (Connection con = DataSource.getInstance().getConnection(false);
              PreparedStatement pst = con.prepareStatement(SQL_QUERY)) {
             pst.setString(1, topic);
             pst.setString(2, Status.PENDING.name());
