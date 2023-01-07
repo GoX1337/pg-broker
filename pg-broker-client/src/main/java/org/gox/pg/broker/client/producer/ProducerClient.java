@@ -65,7 +65,7 @@ public class ProducerClient {
         }
     }
 
-    private void sendEvent(String eventStr) throws IOException {
+    public void sendEvent(String eventStr) throws IOException {
         out.println(eventStr);
         String inputLine;
         while ((inputLine = in.readLine()) != null) {

@@ -64,7 +64,7 @@ public class ConsumerClient {
                 });
     }
 
-    private void subscribe(String topic, Consumer<EventEntity> eventHandler) throws IOException {
+    public void subscribe(String topic, Consumer<EventEntity> eventHandler) throws IOException {
         out.println(String.format("%s %s", Command.TOPIC, topic));
         String inputLine;
         while ((inputLine = in.readLine()) != null) {
