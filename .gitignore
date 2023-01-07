@@ -1,2 +1,5 @@
 .idea/*
 target
+pg-broker-client/target
+pg-broker-common/target
+pg-broker-server/target

@@ -1,4 +1,4 @@
-package org.gox.pg.broker.client;
+package org.gox.pg.broker.client.producer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
