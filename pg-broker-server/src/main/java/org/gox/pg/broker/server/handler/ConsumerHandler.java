@@ -41,24 +41,37 @@ public class ConsumerHandler {
     public void notifyConsumers(String topic) {
         try {
             final List<EventEntity> events = EventDao.getInstance().findAllPendingForTopic(topic);
-            Optional.ofNullable(consumers.get(topic))
-                    .orElse(Collections.emptyList())
-                    .forEach(sendNotifications(events));
-
+            List<ConsumerTask> consumersDestinations = Optional.ofNullable(consumers.get(topic)).orElse(Collections.emptyList());
+            consumersDestinations.forEach(sendNotifications(events));
+            logger.info("Sent {} event to {} consumers subscribed to {}", events.size(), consumersDestinations.size(), topic);
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
     }
 
     private Consumer<ConsumerTask> sendNotifications(List<EventEntity> events) {
-        return consumerTask -> Thread.startVirtualThread(() -> events.forEach(eventEntity -> {
-            sendNotification(consumerTask, eventEntity);
-            try {
-                EventDao.getInstance().updateEvents(events, Status.CONSUMED);
-            } catch (SQLException e) {
-                throw new RuntimeException(e);
-            }
-        }));
+        return consumerTask -> {
+            events.stream()
+                    .map(eventEntity -> Thread.startVirtualThread(() -> sendNotification(consumerTask, eventEntity)))
+                    .forEach(this::waitThreadEnd);
+            updateEventStatues(events);
+        };
+    }
+
+    private static void updateEventStatues(List<EventEntity> events) {
+        try {
+            EventDao.getInstance().updateEvents(events, Status.CONSUMED);
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void waitThreadEnd(Thread thread) {
+        try {
+            thread.join();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private void sendNotification(ConsumerTask consumerTask, EventEntity eventEntity) {

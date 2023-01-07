@@ -18,17 +18,18 @@ public class Tester {
     private final static String HOSTNAME = "127.0.0.1";
     private final static int PORT = 1337;
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException, InterruptedException {
         String topic = "test";
         List<ConsumerClient> consumers = new ArrayList<>();
 
-        for(int i = 0; i < 10000; i++) {
+        for(int i = 0; i < 1000; i++) {
             ConsumerClient consumer = ConsumerClient.builder()
                     .hostname(HOSTNAME)
                     .port(PORT)
                     .build()
                     .connect();
             consumers.add(consumer);
+            Thread.sleep(100);
         }
 
         logger.info("{} consumers created", consumers.size());
@@ -43,20 +44,26 @@ public class Tester {
                     throw new RuntimeException(e);
                 }
             });
+            Thread.sleep(100);
         }
 
+        Thread.sleep(3000);
 
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
 
+        ProducerClient producer = ProducerClient.builder()
+                .hostname(HOSTNAME)
+                .port(PORT)
+                .build()
+                .connect();
+
+        Thread.sleep(3000);
+
         while(true) {
-            ProducerClient producer = ProducerClient.builder()
-                    .hostname(HOSTNAME)
-                    .port(PORT)
-                    .build()
-                    .connect();
             Event event = new Event(topic, OffsetDateTime.now(), "Hello " + Math.random());
             producer.sendEvent(objectMapper.writeValueAsString(event));
+            Thread.sleep(5000);
         }
     }
 }
