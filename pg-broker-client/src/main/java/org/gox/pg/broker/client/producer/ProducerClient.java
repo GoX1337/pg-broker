@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.Builder;
 import lombok.extern.slf4j.Slf4j;
+import org.gox.pg.broker.model.Command;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -38,8 +39,8 @@ public class ProducerClient {
         out.println("2");
         String inputLine;
         while ((inputLine = in.readLine()) != null) {
-            if ("ACKCONNECT".equals(inputLine)) {
-                logger.info("Consumer connected");
+            if (Command.ACKCONNECT.name().equals(inputLine)) {
+                logger.info("Producer connected");
                 break;
             }
         }
@@ -68,7 +69,7 @@ public class ProducerClient {
         out.println(eventStr);
         String inputLine;
         while ((inputLine = in.readLine()) != null) {
-            if ("ACK".equals(inputLine)) {
+            if (Command.ACK.name().equals(inputLine)) {
                 logger.info("Event sent");
                 break;
             }

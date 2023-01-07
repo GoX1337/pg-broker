@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.Builder;
 import lombok.extern.slf4j.Slf4j;
+import org.gox.pg.broker.model.Command;
 import org.gox.pg.broker.model.EventEntity;
 
 import java.io.BufferedReader;
@@ -39,7 +40,7 @@ public class ConsumerClient {
         out.println("1");
         String inputLine;
         while ((inputLine = in.readLine()) != null) {
-            if ("ACKCONNECT".equals(inputLine)) {
+            if (Command.ACKCONNECT.name().equals(inputLine)) {
                 logger.info("Consumer connected");
                 break;
             }
@@ -64,10 +65,10 @@ public class ConsumerClient {
     }
 
     private void subscribe(String topic, Consumer<EventEntity> eventHandler) throws IOException {
-        out.println("TOPIC " + topic);
+        out.println(String.format("%s %s", Command.TOPIC, topic));
         String inputLine;
         while ((inputLine = in.readLine()) != null) {
-            if ("ACK".equals(inputLine)) {
+            if (Command.ACK.name().equals(inputLine)) {
                 logger.info("Consumer subscribed to topic {}", topic);
             } else {
                 EventEntity event = objectMapper.readValue(inputLine, EventEntity.class);

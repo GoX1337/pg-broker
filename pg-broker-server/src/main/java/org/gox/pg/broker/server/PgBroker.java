@@ -5,6 +5,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.gox.pg.broker.dao.EventDao;
 import org.gox.pg.broker.exception.PgBrokerRuntimeException;
 import org.gox.pg.broker.model.ClientType;
+import org.gox.pg.broker.model.Command;
 import org.gox.pg.broker.server.listener.EventListener;
 import org.gox.pg.broker.server.thread.ConsumerTask;
 import org.gox.pg.broker.server.thread.ProducerTask;
@@ -105,7 +106,7 @@ public class PgBroker {
                 if(StringUtils.isNotBlank(inputLine) && StringUtils.isNumeric(inputLine)) {
                     Optional<ClientType> clientTypeOpt = ClientType.valueOf(Integer.parseInt(inputLine));
                     if(clientTypeOpt.isPresent()) {
-                        out.println("ACKCONNECT");
+                        out.println(Command.ACKCONNECT);
                         return clientTypeOpt.get();
                     }
                 }

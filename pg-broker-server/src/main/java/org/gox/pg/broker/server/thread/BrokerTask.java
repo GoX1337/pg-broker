@@ -2,6 +2,7 @@ package org.gox.pg.broker.server.thread;
 
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.gox.pg.broker.model.Command;
 import org.gox.pg.broker.server.PgBroker;
 
 import java.io.BufferedReader;
@@ -26,7 +27,7 @@ public abstract class BrokerTask implements Runnable {
             while ((inputLine = in.readLine()) != null) {
                 logger.info("Received event {}", inputLine);
                 handleRequest(inputLine);
-                out.println("ACK");
+                out.println(Command.ACK);
             }
             logger.info("Client disconnected");
             socket.close();
