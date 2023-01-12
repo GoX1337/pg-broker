@@ -22,11 +22,12 @@ import java.util.*;
 @Slf4j
 public class PgBroker {
 
-    private final List<Thread> consumerThreads = new ArrayList<>();
-    private final List<Thread> producerThreads = new ArrayList<>();
-    private final Map<UUID, Thread> threadsMap = new HashMap<>();
     private final ServerSocket serverSocket;
     private final int port;
+    private int nbConsumers = 0;
+    private int nbProducers = 0;
+    private final Map<UUID, Thread> threadsMap = new HashMap<>();
+    private final Map<UUID, ClientType> threadsTypeMap = new HashMap<>();
 
     public PgBroker(int port) throws IOException {
         this.serverSocket = new ServerSocket(port);
@@ -58,13 +59,13 @@ public class PgBroker {
 
     private Runnable buildMaintenanceTask() {
         return () -> {
-            int producerCount = producerThreads.size();
-            int consumerCount = consumerThreads.size();
+            int producerCount = nbProducers;
+            int consumerCount = nbConsumers;
             while (true) {
-                if(producerThreads.size() != producerCount || consumerThreads.size() != consumerCount) {
-                    logger.info("{} producers connected, {} consumers connected", producerThreads.size(), consumerThreads.size());
-                    producerCount = producerThreads.size();
-                    consumerCount = consumerThreads.size();
+                if(nbProducers != producerCount || nbConsumers != consumerCount) {
+                    logger.info("{} producers connected, {} consumers connected", nbProducers, nbConsumers);
+                    producerCount = nbProducers;
+                    consumerCount = nbConsumers;
                 }
                 sleep();
             }
@@ -123,25 +124,30 @@ public class PgBroker {
     private void createConsumerThread(Socket clientSocket, BufferedReader in, PrintWriter out) {
         UUID uuid = UUID.randomUUID();
         Thread thread = Thread.startVirtualThread(new ConsumerTask(this, uuid, clientSocket, in, out));
-        consumerThreads.add(thread);
+        nbConsumers++;
         threadsMap.put(uuid, thread);
+        threadsTypeMap.put(uuid, ClientType.CONSUMER);
         logger.info("New consumer listener created and started");
     }
 
     private void createProducerThread(Socket clientSocket, BufferedReader in, PrintWriter out) {
         UUID uuid = UUID.randomUUID();
         Thread thread = Thread.startVirtualThread(new ProducerTask(this, uuid, clientSocket, in, out));
-        producerThreads.add(thread);
+        nbProducers++;
         threadsMap.put(uuid, thread);
+        threadsTypeMap.put(uuid, ClientType.PRODUCER);
         logger.info("New producer listener created and started");
     }
 
     public void notifyClientDisconnected(UUID uuid) {
         Thread thread = threadsMap.get(uuid);
         if (thread != null) {
-            consumerThreads.remove(thread);
-            producerThreads.remove(thread);
             threadsMap.remove(uuid);
+            switch (threadsTypeMap.get(uuid)) {
+                case CONSUMER -> nbConsumers--;
+                case PRODUCER -> nbProducers--;
+            }
+            threadsTypeMap.remove(uuid);
         }
     }
 }
