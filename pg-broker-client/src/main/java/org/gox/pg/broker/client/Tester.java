@@ -61,8 +61,7 @@ public class Tester {
         Thread.sleep(3000);
 
         while(true) {
-            Event event = new Event(topic, OffsetDateTime.now(), "Hello " + Math.random());
-            producer.sendEvent(objectMapper.writeValueAsString(event));
+            producer.sendEvent(topic, "Hello " + Math.random());
             Thread.sleep(5000);
         }
     }

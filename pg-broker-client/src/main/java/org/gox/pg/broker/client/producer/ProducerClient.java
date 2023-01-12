@@ -4,13 +4,16 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.Builder;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.gox.pg.broker.model.Command;
+import org.gox.pg.broker.model.Event;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.time.OffsetDateTime;
 import java.util.Scanner;
 
 @Slf4j
@@ -61,12 +64,28 @@ public class ProducerClient {
         Scanner scanner = new Scanner(System.in);
         while (scanner.hasNext()) {
             String eventStr = scanner.nextLine();
-            producer.sendEvent(eventStr);
+            producer.sendJsonEvent(eventStr);
         }
     }
 
-    public void sendEvent(String eventStr) throws IOException {
-        out.println(eventStr);
+    private void sendJsonEvent(String eventJsonStr) throws IOException {
+        out.println(eventJsonStr);
+        String inputLine;
+        while ((inputLine = in.readLine()) != null) {
+            if (Command.ACK.name().equals(inputLine)) {
+                logger.info("Event sent");
+                break;
+            }
+        }
+    }
+    public void sendEvent(String topic, String payload) throws IOException {
+        if(StringUtils.isEmpty(topic) || StringUtils.isEmpty(payload)) {
+            String message = "Topic or payload is empty !";
+            logger.error(message);
+            throw new RuntimeException(message);
+        }
+        Event event = new Event(topic, OffsetDateTime.now(), payload);
+        out.println(objectMapper.writeValueAsString(event));
         String inputLine;
         while ((inputLine = in.readLine()) != null) {
             if (Command.ACK.name().equals(inputLine)) {
