@@ -40,5 +40,5 @@ ProducerClient producer = ProducerClient.builder()
                 .build()
                 .connect();
 
-producer.send("topic", "Hello there");
+producer.sendEvent("topic", "Hello there");
 ```
