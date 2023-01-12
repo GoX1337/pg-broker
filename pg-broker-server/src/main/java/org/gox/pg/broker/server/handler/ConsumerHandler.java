@@ -8,6 +8,7 @@ import org.gox.pg.broker.model.EventEntity;
 import org.gox.pg.broker.model.Status;
 import org.gox.pg.broker.server.thread.ConsumerTask;
 
+import java.io.PrintWriter;
 import java.sql.SQLException;
 import java.util.*;
 import java.util.function.Consumer;
@@ -18,7 +19,7 @@ public class ConsumerHandler {
     private static ConsumerHandler instance;
 
     private final ObjectMapper objectMapper;
-    private final Map<String, List<ConsumerTask>> consumers = new HashMap<>();
+    private final Map<String, List<PrintWriter>> consumers = new HashMap<>();
 
     private ConsumerHandler() {
         objectMapper = new ObjectMapper();
@@ -33,15 +34,15 @@ public class ConsumerHandler {
     }
 
     public void registerConsumer(String topic, ConsumerTask consumerTask) {
-        List<ConsumerTask> consumerTasks = consumers.computeIfAbsent(topic, k -> new ArrayList<>());
-        consumerTasks.add(consumerTask);
+        List<PrintWriter> consumerWriters = consumers.computeIfAbsent(topic, k -> new ArrayList<>());
+        consumerWriters.add(consumerTask.getOut());
         logger.info("New client subscribed to topic {}", topic);
     }
 
     public void notifyConsumers(String topic) {
         try {
             final List<EventEntity> events = EventDao.getInstance().findAllPendingForTopic(topic);
-            List<ConsumerTask> consumersDestinations = Optional.ofNullable(consumers.get(topic)).orElse(Collections.emptyList());
+            List<PrintWriter> consumersDestinations = Optional.ofNullable(consumers.get(topic)).orElse(Collections.emptyList());
             consumersDestinations.forEach(sendNotifications(events));
             logger.info("Sent {} event to {} consumers subscribed to {}", events.size(), consumersDestinations.size(), topic);
         } catch (SQLException e) {
@@ -49,10 +50,10 @@ public class ConsumerHandler {
         }
     }
 
-    private Consumer<ConsumerTask> sendNotifications(List<EventEntity> events) {
-        return consumerTask -> {
+    private Consumer<PrintWriter> sendNotifications(List<EventEntity> events) {
+        return printWriter -> {
             events.stream()
-                    .map(eventEntity -> Thread.startVirtualThread(() -> sendNotification(consumerTask, eventEntity)))
+                    .map(eventEntity -> Thread.startVirtualThread(() -> sendNotification(printWriter, eventEntity)))
                     .forEach(this::waitThreadEnd);
             updateEventStatues(events);
         };
@@ -74,9 +75,9 @@ public class ConsumerHandler {
         }
     }
 
-    private void sendNotification(ConsumerTask consumerTask, EventEntity eventEntity) {
+    private void sendNotification(PrintWriter consumerWriter, EventEntity eventEntity) {
         try {
-            consumerTask.getOut().println(objectMapper.writeValueAsString(eventEntity));
+            consumerWriter.println(objectMapper.writeValueAsString(eventEntity));
         } catch (Exception e) {
             logger.error("Fail to send a notification", e);
         }

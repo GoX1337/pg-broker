@@ -39,10 +39,6 @@ public abstract class BrokerTask implements Runnable {
 
     public abstract void handleRequest(String payload);
 
-    public BufferedReader getIn() {
-        return in;
-    }
-
     public PrintWriter getOut() {
         return out;
     }
