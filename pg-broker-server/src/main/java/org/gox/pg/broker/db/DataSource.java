@@ -4,23 +4,32 @@ import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import lombok.extern.slf4j.Slf4j;
 
-import java.net.URL;
+import java.io.IOException;
+import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.Properties;
 
 @Slf4j
 public class DataSource {
 
     private static DataSource instance;
     private static HikariDataSource dataSource;
+    private static final String DATASOURCE_PROPERTIES = "datasource.properties";
 
     private DataSource() {
-        URL fileUrl = DataSource.class.getResource("/datasource.properties");
-        if(fileUrl != null) {
-            dataSource = new HikariDataSource(new HikariConfig(fileUrl.getPath()));
-        } else {
+        dataSource = new HikariDataSource(new HikariConfig(getDatasourceProperties()));
+    }
+
+    private Properties getDatasourceProperties() {
+        Properties properties = new Properties();
+        try(InputStream in = getClass().getClassLoader().getResourceAsStream(DATASOURCE_PROPERTIES)) {
+            properties.load(in);
+        } catch (IOException e) {
             logger.error("Fail to load datasource.properties for HikariCP");
+            throw new RuntimeException(e);
         }
+        return properties;
     }
 
     public Connection getConnection(boolean autocommit) throws SQLException {

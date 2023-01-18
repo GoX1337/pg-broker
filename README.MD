@@ -6,17 +6,22 @@ Simple event broker on top of PostgreSQL using LISTEN/NOTIFY mechanism.
 
 1. Java 19
 2. Start PostgreSQL docker container :
+
     ```console
    docker run --name pg-broker -p 5432:5432 -e POSTGRES_DB=pg-broker -e POSTGRES_USER=pg-broker -e POSTGRES_PASSWORD=kewk -it postgres
     ```
+   
 ## Server example
 
+Build an executable fat-jar
+ ```console
+mvn package 
+```
 
 Start a broker instance :
-```java
-
+```console
+java.exe --enable-preview -jar pg-broker-server/target/pg-broker-server-1.0-SNAPSHOT.jar 1337
 ``` 
-
 
 ## Client examples
 
